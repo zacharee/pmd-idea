@@ -58,4 +58,7 @@ public final class PmdAdapterDelegate implements PmdAdapter {
         }
     }
 
+    public boolean hasLoadedPmd() {
+        return delegate != null;
+    }
 }
