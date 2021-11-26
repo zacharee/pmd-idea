@@ -10,6 +10,7 @@ import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
@@ -23,6 +24,7 @@ public class ResolvePmdArtifactsTask extends DefaultTask {
 
     public static final String NAME = "resolvePmdArtifacts";
 
+    @OutputDirectory
     private final File bundledJarsDir;
 
     private final File classPathsInfoFile;

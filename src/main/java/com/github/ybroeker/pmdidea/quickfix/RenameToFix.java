@@ -44,7 +44,11 @@ public class RenameToFix extends AbstractLocalQuickFix<PsiNameIdentifierOwner> i
         map.put(CommonDataKeys.EDITOR.getName(), editor);
         map.put(CommonDataKeys.PSI_ELEMENT.getName(), psiElement);
 
-        final DataContext dataContext = SimpleDataContext.getSimpleContext(map, DataManager.getInstance().getDataContext(editor.getComponent()));
+        final DataContext dataContext = SimpleDataContext.builder()
+                .add(CommonDataKeys.EDITOR, editor)
+                .add(CommonDataKeys.PSI_ELEMENT, psiElement)
+                .build();
+
         final RenameElementAction action = new RenameElementAction();
         final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", dataContext);
 

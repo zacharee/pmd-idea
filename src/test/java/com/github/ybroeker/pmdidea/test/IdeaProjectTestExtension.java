@@ -62,7 +62,12 @@ public class IdeaProjectTestExtension implements ParameterResolver, InvocationIn
 
 
         final IdeaProjectTestFixture fixture = createFixture(parameterContext);
-        EdtTestUtil.runInEdtAndWait(fixture::setUp);
+
+        try {
+            EdtTestUtil.runInEdtAndWait(fixture::setUp);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         extensionContext
                 .getStore(Namespace.GLOBAL)

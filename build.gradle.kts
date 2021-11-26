@@ -1,5 +1,4 @@
 import com.github.ybroeker.pmdidea.build.*
-import org.jetbrains.changelog.closure
 import org.jetbrains.changelog.markdownToHTML
 
 plugins {
@@ -7,9 +6,9 @@ plugins {
     jacoco
     id("idea")
     // gradle-intellij-plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-    id("org.jetbrains.intellij") version "0.7.3"
+    id("org.jetbrains.intellij") version "1.3.0"
     // gradle-changelog-plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
-    id("org.jetbrains.changelog") version "0.6.2"
+    id("org.jetbrains.changelog") version "1.3.1"
 }
 
 // Import variables from gradle.properties file
@@ -41,10 +40,13 @@ sourceSets {
     }
 }
 
-configurations["pmdwrapperCompile"].extendsFrom(configurations["compile"])
+configurations.register("pmdwrapperCompile")
+configurations.register("pmdwrapperRuntime")
+
+configurations["pmdwrapperCompile"].extendsFrom(configurations["implementation"])
 configurations["pmdwrapperCompileOnly"].extendsFrom(configurations["compileOnly"])
 configurations["pmdwrapperCompileClasspath"].extendsFrom(configurations["compileClasspath"])
-configurations["pmdwrapperRuntime"].extendsFrom(configurations["runtime"])
+configurations["pmdwrapperRuntime"].extendsFrom(configurations["runtimeOnly"])
 
 
 // Configure project's dependencies
@@ -55,14 +57,14 @@ repositories {
 // Configure gradle-intellij-plugin plugin.
 // Read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
-    pluginName = pluginName_
-    version = platformVersion
-    type = platformType
-    downloadSources = platformDownloadSources.toBoolean()
-    updateSinceUntilBuild = true
+    pluginName.set(pluginName_)
+    version.set(platformVersion)
+    type.set(platformType)
+    downloadSources.set(platformDownloadSources.toBoolean())
+    updateSinceUntilBuild.set(true)
 
     // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    setPlugins(*platformPlugins.split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
+    plugins.set(platformPlugins.split(',').map(String::trim).filter(String::isNotEmpty))
 }
 
 
@@ -75,14 +77,14 @@ tasks {
     }
 
     patchPluginXml {
-        version(pluginVersion)
-        sinceBuild(pluginSinceBuild)
-        untilBuild(pluginUntilBuild)
+        version.set(pluginVersion)
+        sinceBuild.set(pluginSinceBuild)
+        untilBuild.set(pluginUntilBuild)
 
         // Extract the <!-- Plugin description --> section from README.md and provide for the plugin's manifest
-        pluginDescription(
-            closure {
-                File("./README.md").readText().lines().run {
+        pluginDescription.set(
+            provider {
+                File("${project.rootDir}/README.md").readText().lines().run {
                     val start = "<!-- Plugin description -->"
                     val end = "<!-- Plugin description end -->"
 
@@ -95,24 +97,24 @@ tasks {
         )
 
         // Get the latest available change notes from the changelog file
-        changeNotes(
-            closure {
+        changeNotes.set(
+            provider {
                 changelog.getLatest().toHTML()
             }
         )
     }
 
     runPluginVerifier {
-        ideVersions(pluginVerifierIdeVersions)
+        ideVersions.add(pluginVerifierIdeVersions)
     }
 
     publishPlugin {
         dependsOn("patchChangelog")
-        token(System.getenv("PUBLISH_TOKEN"))
+        token.set(System.getenv("PUBLISH_TOKEN"))
         // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
         // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
         // https://jetbrains.org/intellij/sdk/docs/tutorials/build_system/deployment.html#specifying-a-release-channel
-        channels(pluginVersion.split('-').getOrElse(1) { "default" }.split('.').first())
+        channels.add(pluginVersion.split('-').getOrElse(1) { "default" }.split('.').first())
     }
 }
 
@@ -139,16 +141,16 @@ tasks[CopyPMDToSandboxTask.TEST_NAME].dependsOn("prepareTestingSandbox")
 tasks[CopyClassesToSandboxTask.TEST_NAME].dependsOn("prepareTestingSandbox")
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.7.0")
-    testImplementation("org.assertj:assertj-core:3.20.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.1")
+    testImplementation("org.assertj:assertj-core:3.21.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
-    testCompileOnly("junit:junit:4.13")
+    testCompileOnly("junit:junit:4.13.2")
     testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 
-    compileOnly("net.sourceforge.pmd:pmd-core:6.0.1")
+    compileOnly("net.sourceforge.pmd:pmd-core:6.40.0")
     val pmdwrapperCompile by configurations
-    pmdwrapperCompile("net.sourceforge.pmd:pmd-core:6.0.1");
+    pmdwrapperCompile("net.sourceforge.pmd:pmd-core:6.40.0");
 }
 
 tasks.named<Test>("test") {
